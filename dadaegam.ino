@@ -209,7 +209,7 @@ void loop()
         back();
         delay(2000); //시간확인
         //2. 지게발 들고 지게발 들었다는 함수 on
-        Gi();
+        aclock();
         //3. 전진해서 라인트레이싱으로 올라와야함
         test();
         delay(2000); //back과 동일
@@ -451,7 +451,7 @@ void back()
 void injunction()
 {
   test(); // 속도50으로 1초 직진
-  delay(1000);
+  delay(1000); // 축을 사거리(+) 중간에 놓는다 
 
   if(goal == 0)
   {
@@ -584,7 +584,7 @@ void JunctionSelect() // 목적지까지 가는 함수
   {
     goal = 1;
     destination();
-    Gi();
+    unclock(); // 내리는거
   }
 }
 
@@ -611,6 +611,24 @@ void Gi() // 지게발 움직이는 함수
     gi = 0;
   }
 }
+
+
+void unclock() // 반시계 오른쪽에서 봤을때
+{
+    digitalWrite(G_1, HIGH);
+    digitalWrite(G_3, LOW);
+    analogWrite(G_2, 70); 
+    delay(1000);         
+}
+
+void aclock() //시계
+{
+    digitalWrite(G_1, LOW); 
+    digitalWrite(G_3, HIGH); 
+    analogWrite(G_2, 70); 
+    delay(1470);         
+}
+
 
 void destination() // 도착해서 대기공간까지 이동 함수
 {
