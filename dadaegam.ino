@@ -15,9 +15,9 @@
 #define BR_D 34 // 움직이는 모터
 #define BR_S 5 // 움직이는 모터
 
-#define G_1 42 // 지게발
-#define G_3 44 // 지게발
-#define G_2 12 // pwm지게발
+#define GD_1 42 // 지게발
+#define GD_2 46 // 지게발
+#define GS 12 // pwm지게발
 
 #define LT_L 38 // 목적지용
 #define LT_R 40 // 목적지용
@@ -156,10 +156,10 @@ void setup()
   pinMode(FR_D, OUTPUT);
   pinMode(BR_D, OUTPUT);
 
-  pinMode(G_1, OUTPUT);
-  pinMode(G_3, OUTPUT);
+  pinMode(GD_1, OUTPUT);
+  pinMode(GD_2, OUTPUT);
   
-  analogWrite(G_2, 0);
+  analogWrite(GS, 0);
 
   analogWrite(FL_S, 0); 
   analogWrite(BL_S, 0); 
@@ -525,8 +525,8 @@ void Comeback()
   {
     goal = 0;
     destination();
-    QR_x = 0;
-    QR_y = 0;   
+    QR_x = 0; //?
+    QR_y = 0; //?  
   }
 }
 void JunctionSelect() // 목적지까지 가는 함수
@@ -587,31 +587,6 @@ void JunctionSelect() // 목적지까지 가는 함수
     unclock(); // 내리는거
   }
 }
-
-
-
-void Gi() // 지게발 움직이는 함수
-{
-  if(gi==0)
-  {
-    digitalWrite(G_1, HIGH); 
-    digitalWrite(G_3, LOW); 
-              
-    analogWrite(G_2, 120);            
-    delay(3000); //확인필요
-    gi = 1;
-  }
-  else
-  {
-    digitalWrite(G_1, LOW);
-    digitalWrite(G_3, HIGH);
-               
-    analogWrite(G_2, 120);            
-    delay(3000); //확인필요
-    gi = 0;
-  }
-}
-
 
 void unclock() // 반시계 오른쪽에서 봤을때
 {
