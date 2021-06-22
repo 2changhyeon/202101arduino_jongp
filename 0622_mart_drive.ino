@@ -34,7 +34,6 @@ int line_L = 0; // 목적지용
 long randNumber;
 int QR_x =0;
 int QR_y =0;
-int QR_sum = 0;
 
 int RC_x = 0;
 int RC_y = 0;
@@ -51,7 +50,7 @@ int LTsum = 0;
 const uint8_t SX1509_ADDRESS = 0x3E; 
 SensorBar mySensorBar(SX1509_ADDRESS);
 
-//qr
+////////////////////////////QR코드/////////////////////////////
 class MyParser : public HIDReportParser {
   public:
     MyParser();
@@ -121,13 +120,13 @@ void MyParser::OnKeyScanned(bool upper, uint8_t mod, uint8_t key)
   if(cnt==0)
   {
     QR_x = ascii;
-    cnt++;
   }
   else
   {
     QR_y = ascii;
     cnt = 0;
   }
+  cnt++;
 }
 
 
@@ -146,17 +145,13 @@ USB          Usb;
 USBHub       Hub(&Usb);
 HIDUniversal Hid(&Usb);
 MyParser     Parser;
+/////////////////////////////////////////////////////////////
 
-
-
+////////////////////////////셋업//////////////////////////////
 void setup() 
 {
   //랜덤함수를 사용하기 위해서 시드 설정
-  randomSeed(analogRead(0));
-
-  TCCR1B = TCCR1B & 0b11111000 | 0b00000010; //
-  TCCR3B = TCCR3B & 0b11111000 | 0b00000010; // 
-  TCCR4B = TCCR4B & 0b11111000 | 0b00000010; //
+  //randomSeed(analogRead(0));
   
   pinMode(FL_D, OUTPUT);         
   pinMode(BL_D, OUTPUT);         
@@ -166,7 +161,6 @@ void setup()
   pinMode(GD_1, OUTPUT);
   pinMode(GD_2, OUTPUT);
   pinMode(GS, OUTPUT);
-  //analogWrite(GS, 0); // ? 
 
   analogWrite(FL_S, 0); 
   analogWrite(BL_S, 0); 
@@ -200,7 +194,9 @@ void setup()
   delay(200);
   Hid.SetReportParser(0, &Parser);
 }
+////////////////////////////////////////////////////////////////////////
 
+//////////////////////////////////루프//////////////////////////////////
 void loop() 
 {
   getLT();
@@ -229,15 +225,16 @@ void loop()
     }
   }
   
-  else //if((line_L == 0)&&(line_R == 0))
+  else
   {
     driving();
   }
   
   //delay(10);
 }
+/////////////////////////////////////////////////////////////////////
 
-
+//////////////////////////라인트레이서//////////////////////////////////
 void getLT() //스파크썬 라인트레이서 사용
 {
   LTsum = 0;
@@ -248,7 +245,6 @@ void getLT() //스파크썬 라인트레이서 사용
   for( int i = 7; i >= 0; i-- )
   {
     LTstr[i] = String(((rawValue >> i) & 0x01));
-    LTsum += LTstr[i].toInt()*pow(2, i);   
   }
   
   for( int i = 0; i<8; i++ )
@@ -262,7 +258,9 @@ void LT() // 출도착지 확인용 라인트레이서
   line_L = digitalRead(LT_L);
   line_R = digitalRead(LT_R);
 }
+//////////////////////////////////////////////////////////////////////
 
+////////////////////////////LT움직임 제어///////////////////////////////
 void driving()
 {
    
@@ -323,7 +321,9 @@ void driving()
   else
   {stopp();}  // 바꿔야함 
 }
+////////////////////////////////////////////////////////////////////////////////
 
+//////////////////////////////주행 바퀴제어//////////////////////////////////////
 void forward()
 {
   digitalWrite(FL_D, HIGH);           
@@ -519,50 +519,20 @@ void back()
   digitalWrite(BR_D, LOW);          
   analogWrite(BR_S, 50); 
 }
+/////////////////////////////////////////////////////////////////////////////
 
-void st_right()
-{
-  digitalWrite(FL_D, HIGH);           
-  analogWrite(FL_S, 50);            
-
-  digitalWrite(BL_D, LOW);            
-  analogWrite(BL_S, 50);           
-
-  digitalWrite(FR_D, LOW);            
-  analogWrite(FR_S, 50);             
-
-  digitalWrite(BR_D, HIGH);          
-  analogWrite(BR_S, 50); 
-}
-
-void st_left()
-{
-  digitalWrite(FL_D, LOW);           
-  analogWrite(FL_S, 50);            
-
-  digitalWrite(BL_D, HIGH);            
-  analogWrite(BL_S, 50);           
-
-  digitalWrite(FR_D, HIGH);            
-  analogWrite(FR_S, 50);             
-
-  digitalWrite(BR_D, LOW);          
-  analogWrite(BR_S, 50); 
-}
-
-
-
+///////////////////////////////////사거리 들어갔을때///////////////////////////
 void injunction()
 {
   test2(); // 속도50으로 1초 직진
   delay(650); // 축을 사거리(+) 중간에 놓는다 
   if(goal == 0)
   {
-    JunctionSelect();
+    go();
   }
   else if (goal == 1)
   {
-    Comeback();
+    come();
   }
   else
   {
@@ -570,155 +540,9 @@ void injunction()
     delay(10000);
   }
 }
+/////////////////////////////////////////////////////////////////////////////
 
-
-void Comeback()
-{
-    randNumber = random(10,20);
-    randn = randNumber % 2;
-
-
-    if ((randn == 0) && (RC_x == 0))
-    {
-      randn = 1; 
-    }
-    else if ((randn == 1) && (RC_y == 0))
-    {
-      randn = 0; 
-    }
-
-    
-    if((randn == 0) && (RC_x > 0)) //x축이동
-    {
-      if(flag == 1) //x축방향
-      {
-        forward();
-        delay(1000);
-        RC_x -= 1;
-      }
-      
-      else
-      {
-
-         turn_right();
-         delay(1000);
-         getLT();
-         while(LTresult != "00011000")
-          {
-          getLT();
-          turn_right();
-          }
-        RC_x -= 1;
-        flag = 1;
-      }
-    } 
-     
-    else if((randn == 1)&&(RC_y > 0)) //y축이동
-    {
-      if(flag == 1) //x축방향
-      {
-         turn_left();
-         delay(1000);
-         getLT();
-         while(LTresult != "00011000")
-          {
-          getLT();
-          turn_left();
-          }
-        RC_y -= 1;
-        flag = 0;
-      }
-  
-      else // y축방향
-      {
-        forward();
-        delay(1000);
-        RC_y -= 1;
-      }
-    } 
-  
-  else if((0 == RC_y)&&(0 == RC_x))  
-  {
-    goal = 0;
-    destination();
-    QR_x = 0; //?
-    QR_y = 0; //? 
-    RC_x = 0;
-    RC_y = 0; 
-  }
-}
-void JunctionSelect() // 목적지까지 가는 함수
-{
-    randNumber = random(10,20);
-    randn = randNumber % 2;
-
-    if ((randn == 0) && (RC_x == QR_x - 48))
-    {
-      randn = 1; 
-    }
-    else if ((randn == 1) && (RC_y == QR_y - 48))
-    {
-      randn = 0; 
-    }
-
-
-  
-    if((randn == 0) && (QR_x - 48 > RC_x)) //x축이동
-    {
-      if(flag == 1) //오른쪽을 보고있을때
-      {
-        forward();
-        delay(1000);
-        RC_x += 1;
-      }
-      else
-      {
-         turn_right();
-         delay(1000);
-         getLT();
-         while(LTresult != "00011000")
-         {
-         getLT();
-         turn_right();
-         }
-        RC_x += 1;
-        flag = 1;
-      }
-    }
-     
-    else if((randn == 1)&&(QR_y - 48 > RC_y)) //y축이동
-    {
-      if(flag == 1) //오른쪽보고있을떄
-      {
-         turn_left();
-         delay(1000);
-         getLT();
-         while(LTresult != "00011000")
-          {
-          getLT();
-          turn_left();
-          }
-        RC_y += 1;
-        flag = 0;
-      }
-  
-      else
-      {
-        forward();
-        delay(1000);
-        RC_y += 1;
-      }
-    }
-  
-  else if((QR_y - 48 == RC_y)&&(QR_x - 48 == RC_x))  
-  {
-    goal = 1;
-    destination2();
-    aclock(); // 내리는거
-
-  }
-}
-
+////////////////////////////////////////지게//////////////////////////////////
 void unclock() // 반시계 오른쪽에서 봤을때
 {
     digitalWrite(GD_1, HIGH);
@@ -737,26 +561,122 @@ void aclock() //시계
     analogWrite(GS, 0);
 }
 
+/////////////////////////////////////////////////////////////////////////////
 
+////////////////////////////////////마트형식 이동루프 /////////////////////////
+void go()
+{
+  goal = 0;
+  if((QR_y - 48 > RC_y)&&(RC_x == 0))
+  {
+    forward();
+    delay(1000);
+    RC_y += 1;
+  }
+  else if((QR_y -48 == RC_y)&&(RC_x == 0))
+  {
+    turn_right();
+    delay(1000);
+    getLT();
+    while(LTresult != "00011000")
+    {
+      getLT();
+      turn_right();
+    }
+    RC_x += 1;
+  }
+  
+  else if((QR_y -48 == RC_y)&&(QR_x -48 > RC_x))
+  {
+    forward();
+    delay(1000);
+    RC_x += 1;
+  }
+
+  else if((QR_y -48 == RC_y)&&(QR_x - 48 == RC_x))
+  {
+    goal = 1;
+    turn_right();
+    delay(1000);
+    getLT();
+    while(LTresult != "00011000")
+    {
+      getLT();
+      turn_right();
+    }
+    back();
+    delay(4000);
+    stopp();
+    aclock();
+    test();
+    delay(1500);
+  }
+  
+}
+
+void come()
+{
+  if((QR_y -48 == RC_y)&&(QR_x - 48 == RC_x))
+  {
+    turn_right();
+    delay(1000);
+    getLT();
+    while(LTresult != "00011000")
+    {
+      getLT();
+      turn_right();
+    }
+    RC_x -= 1;
+  }
+  else if((QR_y -48 == RC_y)&&(0 < RC_x))
+  {
+    forward();
+    delay(1000);
+    RC_x -= 1;
+  }
+  else if((QR_y -48 == RC_y)&&(0 == RC_x))
+  {
+    turn_left();
+    delay(1000);
+    getLT();
+    while(LTresult != "00011000")
+    {
+      getLT();
+      turn_left();
+    }
+    RC_y -= 1;  
+  }
+
+  else if((0<RC_y)&&(0 == RC_x))
+  {
+    forward();
+    delay(1000);
+    RC_y -= 1;
+  } 
+
+  else if((0==RC_y)&&(0 == RC_x)&&(goal==1))
+  {
+    goal = 0;
+    turn_left();
+    delay(4750); // 4800 4850 0749
+    back();
+    delay(4000);  // 출발지 도착 4000 3000
+    stopp();
+    QR_x = 0;
+    QR_y = 0;
+    RC_x = 0;
+    RC_y = 0; 
+
+  } 
+}
+
+/////////////////////////////////////목적지/도착지////////////////////////////
 void destination() // 도착해서 대기공간까지 이동 함수
 {
     if(flag == 1)
     {
         turn_right();
         delay(2400); //3870-> 2400
-        /*
-        if(LTresult != "00011000")
-        {
-          if(LTsum >= 16)
-          {
-            st_right();
-          }
-          else if(LTsum <= 8)
-          {
-            st_left();
-          }
-        }
-        */
         flag = 0;
         back();
         delay(4000); // 대충 검은곳에 올라올 정도 
@@ -766,20 +686,6 @@ void destination() // 도착해서 대기공간까지 이동 함수
     {
         turn_left();
         delay(4750); // 4800 4850 0749
-        /*
-        if(LTresult != "00011000")
-        {
-          if(LTsum >= 16)
-          {
-            st_right();
-          }
-          else if(LTsum <= 8)
-          {
-            st_left();
-          }
-        }
-        */
-        //180도 돌아야함
         back();
         delay(4000);  // 출발지 도착 4000 3000
         stopp();
@@ -793,19 +699,6 @@ void destination2() // 목적지 도착 후 내려놓기
     {
         turn_right();
         delay(2400); //3870-> 2400
-        /*
-        if(LTresult != "00011000")
-        {
-          if(LTsum >= 16)
-          {
-            st_right();
-          }
-          else if(LTsum <= 8)
-          {
-            st_left();
-          }
-        }
-        */
         flag = 0;
         back();
         delay(3000); // 대충 검은곳에 올라올 정도 
@@ -815,19 +708,7 @@ void destination2() // 목적지 도착 후 내려놓기
     {
         turn_right(); // right -> left 테스트용
         delay(4800); // 4800 -> 4800 0749
-        /*
-        if(LTresult != "00011000")
-        {
-          if(LTsum >= 16)
-          {
-            st_right();
-          }
-          else if(LTsum <= 8)
-          {
-            st_left();
-          }
-        }
-        */
+
         //180도 돌아야함
         back();
         delay(3000);  
@@ -835,3 +716,4 @@ void destination2() // 목적지 도착 후 내려놓기
     }
     
 }
+/////////////////////////////////////////////////////////////////////////////
